@@ -7,7 +7,7 @@
 
 Name:           eclipse-quickrex
 Version:        3.5.0
-Release:        %mkrel 0.5.1
+Release:        %mkrel 0.5.2
 Summary:        %{upstream_name} is a regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
@@ -30,8 +30,6 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 %if %{gcj_support}
 BuildRequires:    gcc-java
 BuildRequires:    java-gcj-compat-devel
-Requires(post):   java-gcj-compat
-Requires(postun): java-gcj-compat
 %else
 BuildRequires:    java-devel >= 1.5.0
 %endif
