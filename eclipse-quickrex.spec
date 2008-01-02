@@ -25,6 +25,7 @@ Source3:        feature.xml
 # This patch disables jregex support due to the fact that there isn't a Fedora
 # package of it.
 Patch0:         quickrex-disable-jregex-capability.patch
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %if %{gcj_support}
 BuildRequires:    gcc-java
