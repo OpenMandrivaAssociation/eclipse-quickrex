@@ -8,7 +8,7 @@
 Name:           eclipse-quickrex
 Version:        3.5.0
 Release:        %mkrel 0.5.2
-Summary:        %{upstream_name} is a regular-expression test Eclipse Plug-In
+Summary:        Regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
 License:        Eclipse Public License
