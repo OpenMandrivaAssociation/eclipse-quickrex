@@ -43,6 +43,7 @@ BuildRequires: jakarta-oro
 Requires: jakarta-oro
 BuildRequires: regexp
 Requires: regexp
+BuildRequires: zip
 Provides: eclipse-%{upstream_name} = %{version}-%{release}
 
 %description
