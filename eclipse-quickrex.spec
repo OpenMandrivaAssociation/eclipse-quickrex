@@ -1,5 +1,5 @@
-%define gcj_support         1
-%define eclipse_base        %{_datadir}/eclipse
+%define gcj_support         0
+%define eclipse_base        %{_libdir}/eclipse
 %define upstream_name       QuickREx
 %define cvs_tag             QuickREx_3_5_0
 %define oro_jar             jakarta-oro-2.0.8.jar
@@ -7,7 +7,7 @@
 
 Name:           eclipse-quickrex
 Version:        3.5.0
-Release:        %mkrel 0.5.2
+Release:        %mkrel 0.8.1
 Summary:        Regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
@@ -67,71 +67,39 @@ ln -s %{_javadir}/regexp.jar %{regexp_jar}
 popd
 popd
 
-# See comments in the script to understand this.
-/bin/sh -x %{eclipse_base}/buildscripts/copy-platform SDK %{eclipse_base}
-mkdir home
-
 %build
-SDK=$(cd SDK > /dev/null && pwd)
-
-# Eclipse may try to write to the home directory.
-homedir=$(cd home > /dev/null && pwd)
-
-java -cp $SDK/startup.jar \
-     -Dosgi.sharedConfiguration.area=%{_libdir}/eclipse/configuration \
-     org.eclipse.core.launcher.Main \
-     -application org.eclipse.ant.core.antRunner \
-     -Dtype=feature \
-     -Did=de.babe.eclipse.plugins.QuickREx \
-     -DbaseLocation=$SDK \
-     -DsourceDirectory=$(pwd) \
-     -DbuildDirectory=$(pwd)/build \
-     -Dbuilder=%{eclipse_base}/plugins/org.eclipse.pde.build/templates/package-build \
-     -f %{eclipse_base}/plugins/org.eclipse.pde.build/scripts/build.xml \
-     -vmargs -Duser.home=$homedir 
+%{eclipse_base}/buildscripts/pdebuild
 
 %install
 rm -rf %{buildroot}
-install -d -m 755 %{buildroot}%{eclipse_base}
-unzip -q -d %{buildroot}%{eclipse_base}/.. \
+installDir=%{buildroot}%{eclipse_base}/dropins/quickrex
+install -d -m 755 $installDir
+unzip -q -d $installDir \
  build/rpmBuild/de.babe.eclipse.plugins.QuickREx.zip
 
 # Re-symlink
-pushd  %{buildroot}/%{eclipse_base}/plugins/de.babe.eclipse.plugins.QuickREx_%{version}/lib
+pushd  $installDir/eclipse/plugins/de.babe.eclipse.plugins.QuickREx_%{version}/lib
 rm %{oro_jar}
 rm %{regexp_jar}
 ln -s %{_javadir}/%{oro_jar}
 ln -s %{_javadir}/regexp.jar %{regexp_jar}
 popd
 
-%if %{gcj_support}
-%{_bindir}/aot-compile-rpm
-%endif
+%{gcj_compile}
 
 %clean
 rm -rf %{buildroot}
 
 %if %{gcj_support}
 %post
-if [ -x %{_bindir}/rebuild-gcj-db ]
-then
-  %{_bindir}/rebuild-gcj-db
-fi
+%{update_gcjdb}
 
 %postun
-if [ -x %{_bindir}/rebuild-gcj-db ]
-then
-  %{_bindir}/rebuild-gcj-db
-fi
+%{update_gcjdb}
 %endif
 
 %files
 %defattr(-,root,root,-)
-%dir %{eclipse_base}/plugins/de.babe.eclipse.plugins.QuickREx_%{version}
-%doc %{eclipse_base}/plugins/de.babe.eclipse.plugins.QuickREx_%{version}/html
-%{eclipse_base}/features/de.babe.eclipse.plugins.QuickREx_%{version}
-%{eclipse_base}/plugins/de.babe.eclipse.plugins.QuickREx_%{version}/*
-%if %{gcj_support}
-%dir %{_libdir}/gcj/%{name}
-%{_libdir}/gcj/%{name}/%{upstream_name}.*
-%endif
+%doc Plug-In/html
+%{eclipse_base}/dropins/quickrex
+%{gcj_files}
