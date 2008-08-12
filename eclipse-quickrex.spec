@@ -7,7 +7,7 @@
 
 Name:           eclipse-quickrex
 Version:        3.5.0
-Release:        %mkrel 0.8.1
+Release:        %mkrel 0.8.2
 Summary:        Regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
@@ -33,9 +33,9 @@ BuildRequires:    java-gcj-compat-devel
 %else
 BuildRequires:    java-devel >= 1.5.0
 %endif
-%if ! %{gcj_support}
-BuildArch: noarch
-%endif
+#if ! %{gcj_support}
+#BuildArch: noarch
+#endif
 
 BuildRequires: eclipse-pde >= 1:3.3.0
 Requires: eclipse-platform >= 3.3.1 
