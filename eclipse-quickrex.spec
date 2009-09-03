@@ -7,7 +7,7 @@
 
 Name:           eclipse-quickrex
 Version:        3.5.0
-Release:        %mkrel 0.8.2
+Release:        %mkrel 0.8.3
 Summary:        Regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
