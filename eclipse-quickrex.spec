@@ -1,17 +1,17 @@
-%define gcj_support         0
 %define eclipse_base        %{_libdir}/eclipse
+%define install_loc         %{_datadir}/eclipse/dropins
 %define upstream_name       QuickREx
-%define cvs_tag             QuickREx_3_5_0
+%define cvs_tag             %{upstream_name}_3_5_0
 %define oro_jar             jakarta-oro-2.0.8.jar
 %define regexp_jar          jakarta-regexp-1.4.jar
 
 Name:           eclipse-quickrex
 Version:        3.5.0
-Release:        %mkrel 0.8.4
-Summary:        Regular-expression test Eclipse Plug-In
+Release:        13
+Summary:        %{upstream_name} is a regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
-License:        Eclipse Public License
+License:        EPL
 URL:            http://www.bastian-bergerhoff.com/eclipse/features/web/QuickREx/toc.html
 # This tarball was made using the included script, like so:
 #   sh ./fetch-quickrex.sh %{cvs_tag}
@@ -22,28 +22,18 @@ Source1:        fetch-quickrex.sh
 # the package.
 Source2:        build.properties
 Source3:        feature.xml
-# This patch disables jregex support due to the fact that there isn't a Fedora
-# package of it.
 Patch0:         quickrex-disable-jregex-capability.patch
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-%if %{gcj_support}
-BuildRequires:    gcc-java
-BuildRequires:    java-gcj-compat-devel
-%else
 BuildRequires:    java-devel >= 1.5.0
-%endif
-#if ! %{gcj_support}
-#BuildArch: noarch
-#endif
+BuildArch: noarch
 
-BuildRequires: eclipse-pde >= 1:3.3.0
-Requires: eclipse-platform >= 3.3.1 
+BuildRequires: eclipse-pde >= 0:3.2.0
+Requires: eclipse-platform >= 3.2.1 
 BuildRequires: jakarta-oro
 Requires: jakarta-oro
 BuildRequires: regexp
 Requires: regexp
-BuildRequires: zip
 Provides: eclipse-%{upstream_name} = %{version}-%{release}
 
 %description
@@ -73,7 +63,7 @@ popd
 
 %install
 rm -rf %{buildroot}
-installDir=%{buildroot}%{eclipse_base}/dropins/quickrex
+installDir=%{buildroot}%{install_loc}/quickrex
 install -d -m 755 $installDir
 unzip -q -d $installDir \
  build/rpmBuild/de.babe.eclipse.plugins.QuickREx.zip
@@ -86,21 +76,11 @@ ln -s %{_javadir}/%{oro_jar}
 ln -s %{_javadir}/regexp.jar %{regexp_jar}
 popd
 
-%{gcj_compile}
-
 %clean
 rm -rf %{buildroot}
-
-%if %{gcj_support}
-%post
-%{update_gcjdb}
-
-%postun
-%{update_gcjdb}
-%endif
 
 %files
 %defattr(-,root,root,-)
 %doc Plug-In/html
-%{eclipse_base}/dropins/quickrex
-%{gcj_files}
+%{install_loc}/quickrex
+
