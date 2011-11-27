@@ -7,7 +7,7 @@
 
 Name:           eclipse-quickrex
 Version:        3.5.0
-Release:        13
+Release:        15
 Summary:        %{upstream_name} is a regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
