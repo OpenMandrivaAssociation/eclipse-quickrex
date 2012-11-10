@@ -1,0 +1,714 @@
+### Eclipse Workspace Patch 1.0
+# By Alphonse Van Assche
+# This patch disables jregex support due to the fact that there isn't a Fedora package of it.
+
+#P Plug-In
+Index: src/de/babe/eclipse/plugins/quickREx/views/QuickRExView.java
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/src/de/babe/eclipse/plugins/quickREx/views/QuickRExView.java,v
+retrieving revision 1.2
+diff -u -r1.2 QuickRExView.java
+--- src/de/babe/eclipse/plugins/quickREx/views/QuickRExView.java	28 May 2007 12:29:17 -0000	1.2
++++ src/de/babe/eclipse/plugins/quickREx/views/QuickRExView.java	4 Jul 2007 23:46:41 -0000
+@@ -78,7 +78,6 @@
+ import de.babe.eclipse.plugins.quickREx.actions.OrganizeTestTextsAction;
+ import de.babe.eclipse.plugins.quickREx.actions.SaveTestTextAction;
+ import de.babe.eclipse.plugins.quickREx.actions.UseJDKREAction;
+-import de.babe.eclipse.plugins.quickREx.actions.UseJRegexAction;
+ import de.babe.eclipse.plugins.quickREx.actions.UseJakartaRegexpAction;
+ import de.babe.eclipse.plugins.quickREx.actions.UseOROAwkREAction;
+ import de.babe.eclipse.plugins.quickREx.actions.UseOROPerlREAction;
+@@ -149,8 +148,6 @@
+ 
+   private Action useOROAWKAction;
+   
+-  private Action useJRegexAction;
+-  
+   private Action useJakartaRegexpAction;
+   
+   private Collection currentFlags = new Vector();
+@@ -289,7 +286,6 @@
+     createFlagFlavourSection(tk, client, layout, gd, Messages.getString("views.QuickRExView.jdk.flags"), MatchSetFactory.JAVA_FLAVOUR); //$NON-NLS-1$
+     createFlagFlavourSection(tk, client, layout, gd, Messages.getString("views.QuickRExView.perl.flags"), MatchSetFactory.ORO_PERL_FLAVOUR); //$NON-NLS-1$
+     createFlagFlavourSection(tk, client, layout, gd, Messages.getString("views.QuickRExView.awk.flags"), MatchSetFactory.ORO_AWK_FLAVOUR); //$NON-NLS-1$
+-    createFlagFlavourSection(tk, client, layout, gd, Messages.getString("views.QuickRExView.jregex.flags"), MatchSetFactory.JREGEX_FLAVOUR); //$NON-NLS-1$
+     createFlagFlavourSection(tk, client, layout, gd, Messages.getString("views.QuickRExView.jakartaRegexp.flags"), MatchSetFactory.JAKARTA_REGEXP_FLAVOUR); //$NON-NLS-1$
+ 
+     section.setClient(client);
+@@ -581,8 +577,6 @@
+ 
+     useOROAWKAction = new UseOROAwkREAction();
+ 
+-    useJRegexAction = new UseJRegexAction();
+-    
+     useJakartaRegexpAction = new UseJakartaRegexpAction();
+     
+     keepREAction = new KeepREAction();
+@@ -607,7 +601,6 @@
+     manager.add(useJDKREAction);
+     manager.add(useOROPerlREAction);
+     manager.add(useOROAWKAction);
+-    manager.add(useJRegexAction);
+     manager.add(useJakartaRegexpAction);
+     manager.add(new Separator("UseRESeparator")); //$NON-NLS-1$
+     manager.add(jcopyAction);
+@@ -622,7 +615,6 @@
+     manager.add(useJDKREAction);
+     manager.add(useOROPerlREAction);
+     manager.add(useOROAWKAction);
+-    manager.add(useJRegexAction);
+     manager.add(useJakartaRegexpAction);
+     manager.add(new Separator("UseRESeparator")); //$NON-NLS-1$
+     manager.add(jcopyAction);
+@@ -696,19 +688,6 @@
+   }
+   
+   /**
+-   * Sets the RE-flavour to be the JRegex-one and triggers a re-evaluation
+-   */
+-  public void setUseJRegex() {
+-    QuickRExPlugin.getDefault().useJRegex();
+-    // This is a hack since there is no direct way of getting rid of the
+-    // completion-proposal popup...
+-    String oldRegExp = regExpCombo.getText();
+-    regExpCombo.setText(oldRegExp + " "); //$NON-NLS-1$
+-    regExpCombo.setText(oldRegExp);
+-    updateEvaluation();
+-  }
+-
+-  /**
+    * Sets the RE-flavour to be the Jakarta-Regexp-one and triggers a re-evaluation
+    */
+   public void setUseJakartaRegexp() {
+Index: src/de/babe/eclipse/plugins/quickREx/regexp/RegularExpressionHits.java
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/src/de/babe/eclipse/plugins/quickREx/regexp/RegularExpressionHits.java,v
+retrieving revision 1.1
+diff -u -r1.1 RegularExpressionHits.java
+--- src/de/babe/eclipse/plugins/quickREx/regexp/RegularExpressionHits.java	5 Nov 2006 19:53:27 -0000	1.1
++++ src/de/babe/eclipse/plugins/quickREx/regexp/RegularExpressionHits.java	4 Jul 2007 23:46:38 -0000
+@@ -17,7 +17,6 @@
+ import java.util.Vector;
+ 
+ import de.babe.eclipse.plugins.quickREx.QuickRExPlugin;
+-import de.babe.eclipse.plugins.quickREx.regexp.jregex.JRegexMatchSet;
+ 
+ /**
+  * @author bastian.bergerhoff, georg.sendt
+@@ -44,20 +43,7 @@
+     while (matches.nextMatch()) {
+       Match match = new Match(matches.start(), matches.end(), matches.groupContents(0));
+       for (int g = 0; g < matches.groupCount(); g++) {
+-        try {
+-          if(MatchSetFactory.JREGEX_FLAVOUR == QuickRExPlugin.getDefault().getREFlavour()) {
+-            JRegexMatchSet jrMatcher = (JRegexMatchSet)matches;
+-            String groupContent = matches.groupContents(g + 1);
+-            if(groupContent != null) {            
+-              match.addGroup(new Group(g + 1, jrMatcher.getGroupID(g + 1), groupContent, matches.groupStart(g + 1), matches.groupEnd(g + 1)));
+-            }
+-          } else {
+-            match.addGroup(new Group(g + 1, matches.groupContents(g + 1), matches.groupStart(g + 1), matches.groupEnd(g + 1)));
+-          }
+-        } catch (StringIndexOutOfBoundsException soob) {
+-          // this happens for the ORO-implementation if the pattern has a group with occurrences 0..* or 0..1 such as in (abc)?
+-          // nop
+-        }
++    	  match.addGroup(new Group(g + 1, matches.groupContents(g + 1), matches.groupStart(g + 1), matches.groupEnd(g + 1)));
+       }
+       matchData.add(match);
+     }
+Index: src/de/babe/eclipse/plugins/quickREx/regexp/MatchSetFactory.java
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/src/de/babe/eclipse/plugins/quickREx/regexp/MatchSetFactory.java,v
+retrieving revision 1.1
+diff -u -r1.1 MatchSetFactory.java
+--- src/de/babe/eclipse/plugins/quickREx/regexp/MatchSetFactory.java	5 Nov 2006 19:53:27 -0000	1.1
++++ src/de/babe/eclipse/plugins/quickREx/regexp/MatchSetFactory.java	4 Jul 2007 23:46:37 -0000
+@@ -17,7 +17,6 @@
+ import de.babe.eclipse.plugins.quickREx.Messages;
+ import de.babe.eclipse.plugins.quickREx.regexp.jakartaRegexp.JakartaRegexpMatchSet;
+ import de.babe.eclipse.plugins.quickREx.regexp.jdk.JavaMatchSet;
+-import de.babe.eclipse.plugins.quickREx.regexp.jregex.JRegexMatchSet;
+ import de.babe.eclipse.plugins.quickREx.regexp.oro.awk.OROAwkMatchSet;
+ import de.babe.eclipse.plugins.quickREx.regexp.oro.perl.OROPerlMatchSet;
+ 
+@@ -32,8 +31,6 @@
+ 
+   public static final int ORO_AWK_FLAVOUR = 4;
+   
+-  public static final int JREGEX_FLAVOUR = 8;
+-  
+   public static final int JAKARTA_REGEXP_FLAVOUR = 16;
+ 
+   /**
+@@ -60,8 +57,6 @@
+       return new OROPerlMatchSet(regExp, text, flavourFlags);
+     case ORO_AWK_FLAVOUR:
+       return new OROAwkMatchSet(regExp, text, flavourFlags);
+-    case JREGEX_FLAVOUR:
+-      return new JRegexMatchSet(regExp, text, flavourFlags);
+     case JAKARTA_REGEXP_FLAVOUR:
+       return new JakartaRegexpMatchSet(regExp, text, flavourFlags);
+     default:
+@@ -85,8 +80,6 @@
+       return OROPerlMatchSet.getAllFlags();
+     case ORO_AWK_FLAVOUR:
+       return OROAwkMatchSet.getAllFlags();
+-    case JREGEX_FLAVOUR:
+-      return JRegexMatchSet.getAllFlags();
+     case JAKARTA_REGEXP_FLAVOUR:
+       return JakartaRegexpMatchSet.getAllFlags();
+     default:
+@@ -104,7 +97,6 @@
+     allFlags.addAll(MatchSetFactory.getAllFlags(JAVA_FLAVOUR));
+     allFlags.addAll(MatchSetFactory.getAllFlags(ORO_PERL_FLAVOUR));
+     allFlags.addAll(MatchSetFactory.getAllFlags(ORO_AWK_FLAVOUR));
+-    allFlags.addAll(MatchSetFactory.getAllFlags(JREGEX_FLAVOUR));
+     allFlags.addAll(MatchSetFactory.getAllFlags(JAKARTA_REGEXP_FLAVOUR));
+     return allFlags;
+   }
+Index: src/de/babe/eclipse/plugins/quickREx/regexp/RegExpContentAssistProcessor.java
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/src/de/babe/eclipse/plugins/quickREx/regexp/RegExpContentAssistProcessor.java,v
+retrieving revision 1.2
+diff -u -r1.2 RegExpContentAssistProcessor.java
+--- src/de/babe/eclipse/plugins/quickREx/regexp/RegExpContentAssistProcessor.java	28 May 2007 12:29:13 -0000	1.2
++++ src/de/babe/eclipse/plugins/quickREx/regexp/RegExpContentAssistProcessor.java	4 Jul 2007 23:46:37 -0000
+@@ -107,8 +107,6 @@
+       iter = proposals.getKeys(MatchSetFactory.ORO_PERL_FLAVOUR).iterator();
+     } else if (QuickRExPlugin.getDefault().isUsingOROAwkRE()) {
+       iter = proposals.getKeys(MatchSetFactory.ORO_AWK_FLAVOUR).iterator();
+-    } else if (QuickRExPlugin.getDefault().isUsingJRegex()) {
+-      iter = proposals.getKeys(MatchSetFactory.JREGEX_FLAVOUR).iterator();
+     } else if (QuickRExPlugin.getDefault().isUsingJakartaRegexp()) {
+       iter = proposals.getKeys(MatchSetFactory.JAKARTA_REGEXP_FLAVOUR).iterator();
+     } else {
+@@ -155,8 +153,6 @@
+       proposal = proposals.getProposal(MatchSetFactory.ORO_PERL_FLAVOUR, proposalKey);
+     } else if (QuickRExPlugin.getDefault().isUsingOROAwkRE()) {
+       proposal = proposals.getProposal(MatchSetFactory.ORO_AWK_FLAVOUR, proposalKey);
+-    } else if (QuickRExPlugin.getDefault().isUsingJRegex()) {
+-      proposal = proposals.getProposal(MatchSetFactory.JREGEX_FLAVOUR, proposalKey);
+     } else if (QuickRExPlugin.getDefault().isUsingJakartaRegexp()) {
+       proposal = proposals.getProposal(MatchSetFactory.JAKARTA_REGEXP_FLAVOUR, proposalKey);
+     } 
+Index: src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexFlag.java
+===================================================================
+RCS file: src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexFlag.java
+diff -N src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexFlag.java
+--- src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexFlag.java	28 May 2007 12:29:18 -0000	1.2
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,100 +0,0 @@
+-/*******************************************************************************
+- * Copyright (c) 2005, 2007 Bastian Bergerhoff and others
+- * All rights reserved. This program and the accompanying materials 
+- * are made available under the terms of the Eclipse Public License v1.0
+- * which accompanies this distribution.
+- * 
+- * Contributors:
+- *     Georg Sendt - initial API and implementation
+- *     Bastian Bergerhoff - some minor cleanup
+- *******************************************************************************/
+-package de.babe.eclipse.plugins.quickREx.regexp.jregex;
+-
+-import jregex.REFlags;
+-import de.babe.eclipse.plugins.quickREx.Messages;
+-import de.babe.eclipse.plugins.quickREx.regexp.Flag;
+-
+-/**
+- * Class JavaFlag. This represents all flags for the JRegex implementation.
+- * 
+- * @author Georg Sendt, Bastian Bergerhoff
+- * @version 1.1
+- * @since 3.5
+- */
+-public class JRegexFlag extends Flag {
+-  
+-  /**
+-   * Pattern "a" matches both "a" and "A".
+-   * Corresponds to "i" in Perl notation.
+-   */
+-  public static final Flag RE_IGNORE_CASE = new JRegexFlag(
+-      "de.babe.eclipse.plugins.quickREx.regexp.jregex.IGNORE_CASE", REFlags.IGNORE_CASE, Messages.getString("regexp.jregex.REFlag.ignore_case"), //$NON-NLS-1$ //$NON-NLS-2$
+-      Messages.getString("regexp.jregex.REFlag.ignore_case.description")); //$NON-NLS-1$
+-
+-  /**
+-   * Affects the behaviour of "^" and "$" tags. When switched off:
+-   * <li> the "^" matches the beginning of the whole text;
+-   * <li> the "$" matches the end of the whole text, or just before the '\n' or "\r\n" at the end of text.
+-   * When switched on:
+-   * <li> the "^" additionally matches the line beginnings (that is just after the '\n');
+-   * <li> the "$" additionally matches the line ends (that is just before "\r\n" or '\n');
+-   * Corresponds to "m" in Perl notation.
+-   */
+-  public static final Flag RE_MULTILINE = new JRegexFlag(
+-      "de.babe.eclipse.plugins.quickREx.regexp.jregex.MULTILINE", REFlags.MULTILINE, Messages.getString("regexp.jregex.REFlag.multiline"), //$NON-NLS-1$ //$NON-NLS-2$
+-      Messages.getString("regexp.jregex.REFlag.multiline.description")); //$NON-NLS-1$
+-
+-
+-  /**
+-   * Affects the behaviour of dot(".") tag. When switched off:
+-   * <li> the dot matches any character but EOLs('\r','\n');
+-   * When switched on:
+-   * <li> the dot matches any character, including EOLs.
+-   * This flag is sometimes referenced in regex tutorials as SINGLELINE, which confusingly seems opposite to MULTILINE, but in fact is orthogonal.
+-   * Corresponds to "s" in Perl notation.
+-   */
+-  public static final Flag RE_DOTALL = new JRegexFlag(
+-      "de.babe.eclipse.plugins.quickREx.regexp.jregex.DOTALL", REFlags.DOTALL, Messages.getString("regexp.jregex.REFlag.dotall"), //$NON-NLS-1$ //$NON-NLS-2$
+-      Messages.getString("regexp.jregex.REFlag.dotall.description")); //$NON-NLS-1$
+-
+-  /**
+-   * Affects how the space characters are interpeted in the expression. When switched off:
+-   * <li> the spaces are interpreted literally;
+-   * When switched on:
+-   * <li> the spaces are ingnored, allowing an expression to be slightly more readable.
+-   * Corresponds to "x" in Perl notation.
+-   */
+-  public static final Flag RE_IGNORE_SPACES = new JRegexFlag(
+-      "de.babe.eclipse.plugins.quickREx.regexp.jregex.IGNORE_SPACES", REFlags.IGNORE_SPACES, Messages.getString("regexp.jregex.REFlag.ignore_spaces"), //$NON-NLS-1$ //$NON-NLS-2$
+-      Messages.getString("regexp.jregex.REFlag.ignore_spaces.description")); //$NON-NLS-1$
+-  
+-  /**
+-   * Affects whether the predefined classes("\d","\s","\w",etc) in the expression are interpreted as belonging to Unicode. When switched off:
+-   * <li> the predefined classes are interpreted as ASCII;
+-   * When switched on:
+-   * <li> the predefined classes are interpreted as Unicode categories;
+-   */
+-  public static final Flag RE_UNICODE = new JRegexFlag(
+-      "de.babe.eclipse.plugins.quickREx.regexp.jregex.UNICODE", REFlags.UNICODE, Messages.getString("regexp.jregex.REFlag.unicode"), //$NON-NLS-1$ //$NON-NLS-2$
+-      Messages.getString("regexp.jregex.REFlag.unicode.description")); //$NON-NLS-1$
+-
+-  /**
+-   * Turns on the compatibility with XML Schema regular expressions.
+-   */
+-  public static final Flag RE_XML_SCHEMA = new JRegexFlag(
+-      "de.babe.eclipse.plugins.quickREx.regexp.jregex.XML_SCHEMA", REFlags.XML_SCHEMA, Messages.getString("regexp.jregex.REFlag.xml_schema"), //$NON-NLS-1$ //$NON-NLS-2$
+-      Messages.getString("regexp.jregex.REFlag.xml_schema.description")); //$NON-NLS-1$
+-
+-  static {
+-    flags.put(RE_IGNORE_CASE.getCode(), RE_IGNORE_CASE);
+-    flags.put(RE_MULTILINE.getCode(), RE_MULTILINE);
+-    flags.put(RE_DOTALL.getCode(), RE_DOTALL);
+-    flags.put(RE_IGNORE_SPACES.getCode(), RE_IGNORE_SPACES);
+-    flags.put(RE_UNICODE.getCode(), RE_UNICODE);
+-    flags.put(RE_XML_SCHEMA.getCode(), RE_XML_SCHEMA);
+-  }
+-
+-  private JRegexFlag(String code, int flag, String name, String description) {
+-    super(code, flag, name, description);
+-  }
+-}
+\ No newline at end of file
+Index: src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexMatchSet.java
+===================================================================
+RCS file: src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexMatchSet.java
+diff -N src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexMatchSet.java
+--- src/de/babe/eclipse/plugins/quickREx/regexp/jregex/JRegexMatchSet.java	5 Nov 2006 19:53:45 -0000	1.1
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,156 +0,0 @@
+-/*******************************************************************************
+- * Copyright (c) 2005 Bastian Bergerhoff and others
+- * All rights reserved. This program and the accompanying materials 
+- * are made available under the terms of the Eclipse Public License v1.0
+- * which accompanies this distribution.
+- * 
+- * Contributors:
+- *     Georg Sendt - initial API and implementation
+- *******************************************************************************/
+-package de.babe.eclipse.plugins.quickREx.regexp.jregex;
+-
+-import java.util.Collection;
+-import java.util.Iterator;
+-import java.util.Vector;
+-import java.util.regex.PatternSyntaxException;
+-
+-import jregex.Matcher;
+-import jregex.Pattern;
+-import de.babe.eclipse.plugins.quickREx.regexp.Flag;
+-import de.babe.eclipse.plugins.quickREx.regexp.MatchSet;
+-
+-/**
+- * MatchSet using JRegex-regular expressions.
+- * 
+- * @author georg.sendt
+- */
+-public class JRegexMatchSet implements MatchSet {
+-
+-  private final Pattern pattern;
+-
+-  private final Matcher matcher;
+-
+-  private final static Collection flags = new Vector();
+-
+-  static {
+-    flags.add(JRegexFlag.RE_IGNORE_CASE);
+-    flags.add(JRegexFlag.RE_MULTILINE);
+-    flags.add(JRegexFlag.RE_DOTALL);
+-    flags.add(JRegexFlag.RE_IGNORE_SPACES);
+-    flags.add(JRegexFlag.RE_UNICODE);
+-    flags.add(JRegexFlag.RE_XML_SCHEMA);
+-  }
+-
+-  /**
+-   * Returns a Collection of all Compiler-Flags the JRegex-implementation knows about.
+-   * 
+-   * @return a Collection of all Compiler-Flags the JRegex-implementation knows about
+-   */
+-  public static Collection getAllFlags() {
+-    return flags;
+-  }
+-
+-  /**
+-   * The constructor - uses the JRegex regular expressions to evaluate the passed regular expression against the passed
+-   * text.
+-   * 
+-   * @param regExp
+-   *          the regular expression
+-   * @param text
+-   *          the text to evaluate regExp against
+-   * @param flags
+-   *          a Collection of Flags to pass to the Compiler
+-   */
+-  public JRegexMatchSet(String regExp, String text, Collection flags) {
+-
+-    try {
+-      int iFlags = 0;
+-      for (Iterator iter = flags.iterator(); iter.hasNext();) {
+-        Flag element = (Flag) iter.next();
+-        iFlags = iFlags | element.getFlag();
+-      }
+-      pattern = new Pattern(regExp, iFlags);
+-      matcher = pattern.matcher(text);
+-    } catch (Exception ex) {
+-      if (ex instanceof PatternSyntaxException)
+-        throw (PatternSyntaxException) ex;
+-      else
+-        throw new PatternSyntaxException(ex.getMessage(), regExp, 0);
+-    }
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#nextMatch()
+-   */
+-  public boolean nextMatch() {
+-    return matcher.find();
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#start()
+-   */
+-  public int start() {
+-    return matcher.start();
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#end()
+-   */
+-  public int end() {
+-    return matcher.end();
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#groupCount()
+-   */
+-  public int groupCount() {
+-    return matcher.groupCount()-1;
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#groupContents(int)
+-   */
+-  public String groupContents(int groupIndex) {
+-    return matcher.group(groupIndex);
+-  }
+-
+-  public String getGroup(String groupID) {
+-    return matcher.group(groupID);
+-  }
+-
+-  public String getGroupID(int groupIndex) {
+-    return matcher.pattern().groupName(new Integer(groupIndex));
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#groupStart(int)
+-   */
+-  public int groupStart(int groupIndex) {
+-    return matcher.start(groupIndex);
+-  }
+-
+-  /*
+-   * (non-Javadoc)
+-   * 
+-   * @see de.babe.eclipse.plugins.quickREx.regexp.MatchSet#groupEnd(int)
+-   */
+-  public int groupEnd(int groupIndex) {
+-    return matcher.end(groupIndex);
+-  }
+-
+-  public boolean matches() {
+-    return matcher.matches();
+-  }
+-}
+Index: src/de/babe/eclipse/plugins/quickREx/actions/UseJRegexAction.java
+===================================================================
+RCS file: src/de/babe/eclipse/plugins/quickREx/actions/UseJRegexAction.java
+diff -N src/de/babe/eclipse/plugins/quickREx/actions/UseJRegexAction.java
+--- src/de/babe/eclipse/plugins/quickREx/actions/UseJRegexAction.java	28 May 2007 12:29:05 -0000	1.2
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,46 +0,0 @@
+-/*******************************************************************************
+- * Copyright (c) 2005, 2007 Bastian Bergerhoff and others
+- * All rights reserved. This program and the accompanying materials 
+- * are made available under the terms of the Eclipse Public License v1.0
+- * which accompanies this distribution.
+- * 
+- * Contributors:
+- *     Bastian Bergerhoff - initial API and implementation
+- *******************************************************************************/
+-package de.babe.eclipse.plugins.quickREx.actions;
+-
+-import org.eclipse.jface.action.Action;
+-import org.eclipse.jface.action.IAction;
+-import org.eclipse.ui.PartInitException;
+-import org.eclipse.ui.PlatformUI;
+-
+-import de.babe.eclipse.plugins.quickREx.Messages;
+-import de.babe.eclipse.plugins.quickREx.PluginImageRegistry;
+-import de.babe.eclipse.plugins.quickREx.QuickRExPlugin;
+-import de.babe.eclipse.plugins.quickREx.views.QuickRExView;
+-
+-/**
+- * @author bastian.bergerhoff
+- */
+-public class UseJRegexAction extends Action {
+-
+-  public UseJRegexAction() {
+-		super("", IAction.AS_RADIO_BUTTON); //$NON-NLS-1$
+-    this.setText(Messages.getString("views.QuickRExView.useJREGEXAction.text")); //$NON-NLS-1$
+-    this.setToolTipText(Messages.getString("views.QuickRExView.useJREGEXAction.tooltip")); //$NON-NLS-1$
+-    this.setChecked(QuickRExPlugin.getDefault().isUsingJRegex());
+-    this.setImageDescriptor(((PluginImageRegistry)QuickRExPlugin.getDefault().getImageRegistry())
+-        .getImageDescriptor(PluginImageRegistry.IMG_JREGEX_LOGO));
+-    this.setId("de.babe.eclipse.plugins.quickREx.actions.UseJRegexAction"); //$NON-NLS-1$
+-	}
+-
+-	public void run() {
+-	    if (isChecked()) {
+-    	  try {
+-          ((QuickRExView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(QuickRExView.ID)).setUseJRegex();
+-        } catch (PartInitException e) {
+-          // Bad luck...
+-        }
+-	    }
+-	  }
+-}
+\ No newline at end of file
+Index: src/de/babe/eclipse/plugins/quickREx/QuickRExPlugin.java
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/src/de/babe/eclipse/plugins/quickREx/QuickRExPlugin.java,v
+retrieving revision 1.2
+diff -u -r1.2 QuickRExPlugin.java
+--- src/de/babe/eclipse/plugins/quickREx/QuickRExPlugin.java	28 May 2007 12:29:18 -0000	1.2
++++ src/de/babe/eclipse/plugins/quickREx/QuickRExPlugin.java	4 Jul 2007 23:46:37 -0000
+@@ -71,8 +71,6 @@
+ 
+   private HashMap jdkCatMappings;
+ 
+-  private HashMap jRegexCatMappings;
+-
+   private HashMap oroAwkCatMappings;
+ 
+   private HashMap oroPerlCatMappings;
+@@ -81,8 +79,6 @@
+ 
+   private ArrayList jdkCategories;
+ 
+-  private ArrayList jRegexCategories;
+-
+   private ArrayList oroAwkCategories;
+ 
+   private ArrayList oroPerlCategories;
+@@ -113,8 +109,6 @@
+ 
+   private static final String JDK_PROPOSAL_FILE_NAME = "$nl$/jdkCompletion.xml"; //$NON-NLS-1$
+   
+-  private static final String JREGEX_PROPOSAL_FILE_NAME = "$nl$/jregexCompletion.xml"; //$NON-NLS-1$
+-
+   private static final String JAKARTA_REGEX_PROPOSAL_FILE_NAME = "$nl$/jakartaRegexpCompletion.xml"; //$NON-NLS-1$
+ 
+   private static final String ORO_AWK_CATEGORIES_FILE_NAME = "$nl$/oroAwkCategories.xml"; //$NON-NLS-1$
+@@ -123,8 +117,6 @@
+ 
+   private static final String JDK_CATEGORIES_FILE_NAME = "$nl$/jdkCategories.xml"; //$NON-NLS-1$
+   
+-  private static final String JREGEX_CATEGORIES_FILE_NAME = "$nl$/jregexCategories.xml"; //$NON-NLS-1$
+-
+   private static final String JAKARTA_REGEX_CATEGORIES_FILE_NAME = "$nl$/jakartaRegexpCategories.xml"; //$NON-NLS-1$
+ 
+   /**
+@@ -173,11 +165,6 @@
+     initCategoriesFromFile(jdkCatMappings, jdkCategories, MatchSetFactory.JAVA_FLAVOUR);
+     addProposalsToMappings(jdkCategories, jdkCatMappings, MatchSetFactory.JAVA_FLAVOUR);
+ 
+-    jRegexCategories = new ArrayList();
+-    jRegexCatMappings = new HashMap();
+-    initCategoriesFromFile(jRegexCatMappings, jRegexCategories, MatchSetFactory.JREGEX_FLAVOUR);
+-    addProposalsToMappings(jRegexCategories, jRegexCatMappings, MatchSetFactory.JREGEX_FLAVOUR);
+-
+     oroAwkCategories = new ArrayList();
+     oroAwkCatMappings = new HashMap();
+     initCategoriesFromFile(oroAwkCatMappings, oroAwkCategories, MatchSetFactory.ORO_AWK_FLAVOUR);
+@@ -639,15 +626,6 @@
+   public boolean isUsingOROAwkRE() {
+     return getREFlavour() == MatchSetFactory.ORO_AWK_FLAVOUR;
+   }
+-  
+-  /**
+-   * Returns <code>true</code> if and only if currently the JRegex-implementation of regular expressions is used.
+-   * 
+-   * @return <code>true</code> if and only if currently the JRegex-implementation of regular expressions is used
+-   */
+-  public boolean isUsingJRegex() {
+-    return getREFlavour() == MatchSetFactory.JREGEX_FLAVOUR;
+-  }
+ 
+   /**
+    * Returns <code>true</code> if and only if currently the Jakarta-Regexp-implementation of regular expressions is used.
+@@ -698,13 +676,6 @@
+   }
+   
+   /**
+-   * Tells the Plugin to use the JRegex-implementation of regular expressions.
+-   */
+-  public void useJRegex() {
+-    getPreferenceStore().setValue(RE_FLAVOUR, MatchSetFactory.JREGEX_FLAVOUR);
+-  }
+-
+-  /**
+    * Tells the Plugin to use the Jakarta-Regexp-implementation of regular expressions.
+    */
+   public void useJakartaRegexp() {
+@@ -761,12 +732,6 @@
+     proposals.setKeys(MatchSetFactory.ORO_AWK_FLAVOUR, oroAwkKeys);
+     proposals.setProposals(MatchSetFactory.ORO_AWK_FLAVOUR, oroAwkProposals);
+     
+-    HashMap jRegexpProposals = new HashMap();
+-    ArrayList jRegexpKeys = new ArrayList();
+-    initCompletionsFromFile(jRegexpProposals, jRegexpKeys, MatchSetFactory.JREGEX_FLAVOUR);
+-    proposals.setKeys(MatchSetFactory.JREGEX_FLAVOUR, jRegexpKeys);
+-    proposals.setProposals(MatchSetFactory.JREGEX_FLAVOUR, jRegexpProposals);
+-    
+     HashMap jakartaProposals = new HashMap();
+     ArrayList jakartaKeys = new ArrayList();
+     initCompletionsFromFile(jakartaProposals, jakartaKeys, MatchSetFactory.JAKARTA_REGEXP_FLAVOUR);
+@@ -786,10 +751,6 @@
+         filepath = JDK_PROPOSAL_FILE_NAME;
+         errorMsgKey = "QuickRExPlugin.error.message7"; //$NON-NLS-1$
+         break;
+-      case MatchSetFactory.JREGEX_FLAVOUR:
+-        filepath = JREGEX_PROPOSAL_FILE_NAME;
+-        errorMsgKey = "QuickRExPlugin.error.readerror.jregex.completion"; //$NON-NLS-1$
+-        break;
+       case MatchSetFactory.ORO_PERL_FLAVOUR:
+         filepath = ORO_PERL_PROPOSAL_FILE_NAME;
+         errorMsgKey = "QuickRExPlugin.error.message9"; //$NON-NLS-1$
+@@ -824,10 +785,6 @@
+         filepath = JDK_CATEGORIES_FILE_NAME;
+         errorMsgKey = "QuickRExPlugin.error.readerror.jdk.categories"; //$NON-NLS-1$
+         break;
+-      case MatchSetFactory.JREGEX_FLAVOUR:
+-        filepath = JREGEX_CATEGORIES_FILE_NAME;
+-        errorMsgKey = "QuickRExPlugin.error.readerror.jregex.categories"; //$NON-NLS-1$
+-        break;
+       case MatchSetFactory.ORO_PERL_FLAVOUR:
+         filepath = ORO_PERL_CATEGORIES_FILE_NAME;
+         errorMsgKey = "QuickRExPlugin.error.readerror.oroperl.categories"; //$NON-NLS-1$
+@@ -975,8 +932,6 @@
+         return oroPerlCategories;
+       case MatchSetFactory.ORO_AWK_FLAVOUR:
+         return oroAwkCategories;
+-      case MatchSetFactory.JREGEX_FLAVOUR:
+-        return jRegexCategories;
+       case MatchSetFactory.JAKARTA_REGEXP_FLAVOUR:
+         return jakCategories;
+       default:
+@@ -1000,8 +955,6 @@
+         return oroPerlCatMappings;
+       case MatchSetFactory.ORO_AWK_FLAVOUR:
+         return oroAwkCatMappings;
+-      case MatchSetFactory.JREGEX_FLAVOUR:
+-        return jRegexCatMappings;
+       case MatchSetFactory.JAKARTA_REGEXP_FLAVOUR:
+         return jakCatMappings;
+       default:
+Index: src/de/babe/eclipse/plugins/quickREx/PluginImageRegistry.java
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/src/de/babe/eclipse/plugins/quickREx/PluginImageRegistry.java,v
+retrieving revision 1.1
+diff -u -r1.1 PluginImageRegistry.java
+--- src/de/babe/eclipse/plugins/quickREx/PluginImageRegistry.java	5 Nov 2006 19:53:42 -0000	1.1
++++ src/de/babe/eclipse/plugins/quickREx/PluginImageRegistry.java	4 Jul 2007 23:46:34 -0000
+@@ -37,8 +37,6 @@
+ 
+   public static final String IMG_ORO_AWK_LOGO = "IMG_ORO_AWK_LOGO"; //$NON-NLS-1$
+   
+-  public static final String IMG_JREGEX_LOGO = "IMG_JREGEX_LOGO"; //$NON-NLS-1$
+-
+   public static final String IMG_JAKARTA_REGEXP_LOGO = "IMG_JAKARTA_REGEXP_LOGO"; //$NON-NLS-1$
+ 
+   public static final String IMG_KEEP_RE = "IMG_KEEP_RE"; //$NON-NLS-1$
+@@ -97,8 +95,7 @@
+       put(IMG_JAVA_LOGO, ImageDescriptor.createFromURL(new URL(iconBaseURL, "JavalogoSmall.gif"))); //$NON-NLS-1$
+       put(IMG_ORO_PERL_LOGO, ImageDescriptor.createFromURL(new URL(iconBaseURL, "OROPerllogoSmall.gif"))); //$NON-NLS-1$
+       put(IMG_ORO_AWK_LOGO, ImageDescriptor.createFromURL(new URL(iconBaseURL, "OROAwklogoSmall.gif"))); //$NON-NLS-1$
+-      put(IMG_JREGEX_LOGO, ImageDescriptor.createFromURL(new URL(iconBaseURL, "JRegexSmall.gif"))); //$NON-NLS-1$      
+-      put(IMG_JAKARTA_REGEXP_LOGO, ImageDescriptor.createFromURL(new URL(iconBaseURL, "JakartaRegexpSmall.gif"))); //$NON-NLS-1$      
++       put(IMG_JAKARTA_REGEXP_LOGO, ImageDescriptor.createFromURL(new URL(iconBaseURL, "JakartaRegexpSmall.gif"))); //$NON-NLS-1$      
+       put(IMG_KEEP_RE, ImageDescriptor.createFromURL(new URL(iconBaseURL, "saveRE.gif"))); //$NON-NLS-1$
+       put(IMG_SAVE_TT, ImageDescriptor.createFromURL(new URL(iconBaseURL, "saveText.gif"))); //$NON-NLS-1$
+       put(IMG_LOAD_TT, ImageDescriptor.createFromURL(new URL(iconBaseURL, "loadText.gif"))); //$NON-NLS-1$
+Index: META-INF/MANIFEST.MF
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/META-INF/MANIFEST.MF,v
+retrieving revision 1.3
+diff -u -r1.3 MANIFEST.MF
+--- META-INF/MANIFEST.MF	28 May 2007 12:29:18 -0000	1.3
++++ META-INF/MANIFEST.MF	4 Jul 2007 23:46:34 -0000
+@@ -14,7 +14,6 @@
+  de.babe.eclipse.plugins.quickREx.objects,
+  de.babe.eclipse.plugins.quickREx.regexp,
+  de.babe.eclipse.plugins.quickREx.regexp.jdk,
+- de.babe.eclipse.plugins.quickREx.regexp.jregex,
+  de.babe.eclipse.plugins.quickREx.regexp.oro,
+  de.babe.eclipse.plugins.quickREx.regexp.oro.awk,
+  de.babe.eclipse.plugins.quickREx.regexp.oro.perl,
+Index: .classpath
+===================================================================
+RCS file: /cvsroot/quickrex/Plug-In/.classpath,v
+retrieving revision 1.1
+diff -u -r1.1 .classpath
+--- .classpath	5 Nov 2006 19:53:40 -0000	1.1
++++ .classpath	4 Jul 2007 23:46:34 -0000
+@@ -4,7 +4,6 @@
+ 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+ 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+ 	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
+-	<classpathentry kind="lib" path="lib/jregex1.2_01.jar"/>
+ 	<classpathentry kind="lib" path="lib/jakarta-regexp-1.4.jar"/>
+ 	<classpathentry kind="output" path="bin"/>
+ </classpath>
+
