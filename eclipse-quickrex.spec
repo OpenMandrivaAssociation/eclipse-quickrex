@@ -12,7 +12,7 @@ Summary:        %{upstream_name} is a regular-expression test Eclipse Plug-In
 
 Group:          Development/Java
 License:        EPL
-URL:            http://www.bastian-bergerhoff.com/eclipse/features/web/QuickREx/toc.html
+URL:            https://www.bastian-bergerhoff.com/eclipse/features/web/QuickREx/toc.html
 # This tarball was made using the included script, like so:
 #   sh ./fetch-quickrex.sh %{cvs_tag}
 Source0:        quickrex-fetched-src-%{cvs_tag}.tar.bz2
